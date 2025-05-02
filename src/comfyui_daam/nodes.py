@@ -223,12 +223,14 @@ class KSamplerDAAM:
         enable_neg_heat_maps = is_output_connected(prompt, node_id, 2)
 
         patcher = CrossAttentionPatcher(
+            model,
             img_height,
             img_width,
             context_size=(pos_context_size, neg_context_size),
             enable_heat_maps=(enable_pos_heat_maps, enable_neg_heat_maps),
         )
-        patcher.patch(model)
+
+        patcher.patch()
 
         (latent_out,) = common_ksampler(
             model,
@@ -244,6 +246,8 @@ class KSamplerDAAM:
         )
 
         pos_heat_maps, neg_heat_maps = patcher.all_heat_maps
+
+        patcher.unpatch()
 
         return (latent_out, pos_heat_maps, neg_heat_maps)
 

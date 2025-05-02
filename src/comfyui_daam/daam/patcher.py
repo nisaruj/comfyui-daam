@@ -38,6 +38,7 @@ class RawHeatMaps:
 class CrossAttentionPatcher:
     def __init__(
         self,
+        model_patcher,
         img_height: int,
         img_width: int,
         context_size: tuple[int, int] = (77, 77),  # [0] for positive, [1] for negative
@@ -48,6 +49,7 @@ class CrossAttentionPatcher:
         weighted: bool = False,
         head_idx: int = 0,
     ):
+        self.model_patcher = model_patcher
         self.img_height = img_height
         self.img_width = img_width
         self.heat_maps = {
@@ -57,6 +59,7 @@ class CrossAttentionPatcher:
         self.context_size = context_size
         self.weighted = weighted
         self.head_idx = head_idx
+        self.saved_model_options = None
 
     @property
     def all_heat_maps(self):
@@ -68,15 +71,27 @@ class CrossAttentionPatcher:
         )
         return pos_heat_maps, neg_heat_maps
 
-    def patch(self, model_patcher, layer_idx: int = None):
+    def patch(self, layer_idx: int = None):
         self.block_tags = UNetCrossAttentionLocator().locate(
-            model_patcher.model.diffusion_model, layer_idx=layer_idx
+            self.model_patcher.model.diffusion_model, layer_idx=layer_idx
         )
 
+        self.saved_model_options = self.model_patcher.model_options.copy()
+
         for block_name, layer_idx, transformer_index in self.block_tags:
-            model_patcher.set_model_patch_replace(
+            self.model_patcher.set_model_patch_replace(
                 self._attn2_patched, "attn2", block_name, layer_idx, transformer_index
             )
+
+    def unpatch(self):
+        if hasattr(self, "block_tags"):
+            for block_name, layer_idx, transformer_index in self.block_tags:
+                self.model_patcher.set_model_patch_replace(
+                    None, "attn2", block_name, layer_idx, transformer_index
+                )
+
+        if self.saved_model_options is not None:
+            self.model_patcher.model_options = self.saved_model_options.copy()
 
     @torch.no_grad()
     def _up_sample_attn(self, x, value, factor, method="bicubic"):
