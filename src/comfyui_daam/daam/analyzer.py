@@ -1,3 +1,6 @@
+from itertools import chain
+
+
 class PromptAnalyzer:
     def __init__(self, clip, all_tokens):
         self.clip = clip
@@ -8,7 +11,7 @@ class PromptAnalyzer:
         return self.clip.cond_stage_model.clip_l.special_tokens["end"]
 
     def _get_tokens_list(self, tokens):
-        return tokens["l"][0]
+        return list(chain.from_iterable(tokens["l"]))
 
     def encode(self, text: str):
         tokens = self.clip.tokenize(text)
