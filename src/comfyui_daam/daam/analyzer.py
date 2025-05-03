@@ -40,11 +40,11 @@ class PromptAnalyzer:
             if i < start_pos:
                 continue
 
-            if needles[0] == token and len(needles) > 1:
+            if needles[0][0] == token[0] and len(needles) > 1:
                 next = i + 1
                 success = True
                 for needle in needles[1:]:
-                    if next >= len(tokens) or needle != tokens[next]:
+                    if next >= len(tokens) or needle[0] != tokens[next][0]:
                         success = False
                         break
                     next += 1
@@ -57,7 +57,7 @@ class PromptAnalyzer:
                         if limit_count >= limit:
                             break
 
-            elif needles[0] == token:
+            elif needles[0][0] == token[0]:
                 merge_idxs.append(i)
                 if limit > 0:
                     limit_count += 1
