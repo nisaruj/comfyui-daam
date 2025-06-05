@@ -322,7 +322,9 @@ class DAAMAnalyzer:
     DESCRIPTION = "Generates a heatmap image from the attention maps and overlays it on the input images."
 
     def analyze(self, clip, tokens, heatmaps, attentions, caption, alpha, images=None):
-        self.attentions = attentions.split(",")
+        self.attentions = [
+            word for word in map(str.strip, attentions.split(",")) if word
+        ]
 
         self.prompt_analyzer = analyzer.PromptAnalyzer(clip, tokens)
 

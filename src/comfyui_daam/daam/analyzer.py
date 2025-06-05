@@ -1,6 +1,7 @@
 from itertools import chain
 from comfy.text_encoders.flux import FluxClipModel
 from comfy.text_encoders.sd3_clip import SD3ClipModel
+from comfy.sd1_clip import escape_important, token_weights
 
 
 class PromptAnalyzer:
@@ -58,15 +59,41 @@ class PromptAnalyzer:
     def _calc_word_indices_clip(self, word: str, limit: int = -1, start_pos=0):
         word = word.lower()
 
-        # Handle special case for parentheses at the end of the word
-        if word.endswith(")"):
-            word += ","
+        # Remove weight specifiers from the query but keep the escaped parentheses
+        cleaned_word, _ = token_weights(escape_important(word), 1.0)[0]
+        cleaned_word = cleaned_word.replace("\0\1", "\\)")
+        cleaned_word = cleaned_word.replace("\0\2", "\\(")
+        is_specifier_removed = cleaned_word != word
+
+        # Handle special case where a comma should be included at the end of the word
+        # curl -s https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/raw/main/tokenizer/vocab.json | grep ,\</w\>
+        special_case = (
+            "!)",
+            "!",
+            '"',
+            "%)",
+            "%",
+            "'",
+            ")",
+            "*",
+            "+",
+            ".",
+            "..",
+            "...",
+            "?",
+            "]",
+            "_",
+            "âģ©",
+        )
+
+        if not is_specifier_removed and cleaned_word.endswith(special_case):
+            cleaned_word += ","
 
         merge_idxs = []
 
         tokens = self.tokens
         tokens = self._get_tokens_list(tokens)
-        needles = self.encode(word)
+        needles = self.encode(cleaned_word)
 
         limit_count = 0
 
