@@ -50,6 +50,27 @@ class PromptAnalyzer:
             if tokens[i][0] == self.end_token:
                 return tokens[start_idx:i]
 
+    def word_count(self):
+        tokens = self._get_tokens_list(self.tokens)
+        for i in range(len(tokens)):
+            if tokens[i][0] == self.end_token:
+                return i if self.model == "t5xxl" else i - 1
+        return len(tokens) if self.model == "t5xxl" else len(tokens) - 1
+
+    def get_decoded_texts(self):
+        if self.model == "t5xxl":
+            detok_tokens = self.clip.tokenizer.t5xxl.untokenize(
+                self._get_tokens_list(self.tokens, "t5xxl")
+            )
+        else:
+            detok_tokens = self.clip.tokenizer.clip_l.untokenize(
+                self._get_tokens_list(self.tokens, "l")
+            )
+
+        token_texts = [token[1] for token in detok_tokens]
+
+        return token_texts
+
     def calc_word_indices(self, word: str, limit: int = -1, start_pos=0):
         if self.model == "t5xxl":
             return self._calc_word_indices_t5xxl(word)

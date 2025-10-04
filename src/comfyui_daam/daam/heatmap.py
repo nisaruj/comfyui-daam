@@ -97,6 +97,53 @@ class HeatMapProcessor:
 
         return im.squeeze()
 
+    def expand_images(
+        im: torch.Tensor,
+        h=512,
+        w=512,
+        norm: str = "z-score",
+        threshold: float = None,
+        max_token_len=None,
+    ) -> torch.Tensor:
+        if im is None:
+            return im
+
+        # If a single image is provided, delegate to the existing single-image method
+        if im.dim() == 2:
+            return HeatMapProcessor.expand_image(
+                im, h=h, w=w, absolute=absolute, threshold=threshold
+            )
+
+        if im.dim() != 3:
+            raise ValueError(
+                f"Expected im of shape (tokens, H, W) or (H, W), got {tuple(im.shape)}"
+            )
+
+        # im: (tokens, H, W) -> (tokens, 1, H, W) for interpolation
+        im = im.unsqueeze(1)
+        im = F.interpolate(im.float().detach(), size=(h, w), mode="bicubic")
+
+        # If max_token_len is specified, set the value of all tokens beyond that to 0
+        # Useful for truncating end tokens
+        if max_token_len is not None and im.shape[0] > max_token_len:
+            im[max_token_len:] = 0
+
+        if norm != None:
+            if norm == "min-max":
+                mins = im.amin(dim=(-2, -1), keepdim=True)
+                maxs = im.amax(dim=(-2, -1), keepdim=True)
+                im = (im - mins) / (maxs - mins + 1e-8)
+            elif norm == "z-score":
+                mean = im.mean(dim=(2, 3), keepdim=True)
+                std = im.std(dim=(2, 3), keepdim=True)
+                im = (im - mean) / (std + 1e-8)
+
+        if threshold is not None:
+            im = (im > threshold).float()
+
+        # return as (tokens, h, w)
+        return im.squeeze(1)
+
     def _write_on_image(img, caption, font_size=36):
         ix, iy = img.size
         draw = ImageDraw.Draw(img)
