@@ -10,11 +10,11 @@
   },
   "2": {
     "inputs": {
-      "seed": 67693399959091,
+      "seed": 625967958181974,
       "steps": 25,
       "cfg": 6,
       "sampler_name": "euler_ancestral",
-      "scheduler": "simple",
+      "scheduler": "normal",
       "denoise": 1,
       "model": [
         "1",
@@ -40,7 +40,7 @@
   },
   "4": {
     "inputs": {
-      "text": "1girl,pink kimono,black hair,brown eyes,twintail,rounded eyewear,outdoor,blush,best quality,masterpiece,small breasts,cat ears",
+      "text": "1girl,big fox ears,school uniform,blue eyes,bag,outdoor,fluffy tail,wavy bronde hair,black skirt,white shirt,black belt",
       "clip": [
         "1",
         1
@@ -53,7 +53,7 @@
   },
   "5": {
     "inputs": {
-      "text": "bad quality,worst quality,old",
+      "text": "bad quality,worst quality,old,bowtie,necktie,bow",
       "clip": [
         "1",
         1

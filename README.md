@@ -10,10 +10,15 @@ This extension enables visualization of cross-attention heatmaps within Stable D
 
 ![Sample Workflow](https://github.com/nisaruj/comfyui-daam/blob/main/img/workflow.png)
 
-This project was adapted from the [SD Web UI implementation](https://github.com/kousw/stable-diffusion-webui-daam).  Special thanks to [@kousw](https://github.com/kousw) for the original work!
+✨ Featuring an Interactive Preview Node — discover the top attention words by simply hovering over the image.
+
+<p align="center">
+<img src="https://i.ibb.co/fVWTs404/Recording-2025-10-13-191703.gif" width="300" />
+</p>
 
 ## ✨ Features
 - ✅ Positive / Negative prompt heatmap visualization
+- ✅ Interactive Image Preview with corresponding attention words
 - ✅ SDXL, SD1.5, SD3 support
 - ✅ Flux Dev support (Beta)
 
@@ -73,6 +78,20 @@ This node generates overlay heatmaps that show which parts of the image correspo
 
 ![Node: DAAMAnalyzer](https://github.com/nisaruj/comfyui-daam/blob/main/img/node_analyzer.png)
 
+### `DAAM Preview (Beta)`
+
+![Node: DAAM Preview (Beta)](https://github.com/nisaruj/comfyui-daam/blob/main/img/node_daam_preview.png)
+
+**The DAAM Preview node provides an interactive visualization of attention maps.**
+
+When the cursor hovers over an image region, the node displays the top attention words associated with that area, ranked by their attention scores. This feature enables clearer interpretation of how specific prompt tokens influence different parts of the generated image.
+
+**Inputs:**
+- `clip` — CLIP model used to encode the attention text
+- `tokens` — from `CLIPTextEncodeWithTokens`
+- `heatmaps` — from `KSamplerDAAM`
+- `images` — the output images
+- `top_tokens` — Top k tokens that will be displayed on the tooltip
 
 ## 📷 Example Output
 
@@ -83,6 +102,10 @@ This node generates overlay heatmaps that show which parts of the image correspo
 ![DAAM Result](https://github.com/nisaruj/comfyui-daam/blob/main/img/preview.png)
 
 ## 📦 Changelog
+
+- **0.5.0**
+    - Added Interactive Preview Node
+    - Moved all nodes to `daam-nodes` category
 
 - **0.4.0**
     - Flux and SD3 initial support
@@ -98,3 +121,6 @@ This node generates overlay heatmaps that show which parts of the image correspo
     - Bug fixes and stability improvements
 - **0.1.1**
     - Initial Version with SDXL support
+
+
+This project was adapted from the [SD Web UI implementation](https://github.com/kousw/stable-diffusion-webui-daam).  Special thanks to [@kousw](https://github.com/kousw) for the original work!
