@@ -9,4 +9,4 @@ __all__ = [
 from .src.comfyui_daam.nodes import NODE_CLASS_MAPPINGS
 from .src.comfyui_daam.nodes import NODE_DISPLAY_NAME_MAPPINGS
 
-WEB_DIRECTORY = "./web"
+WEB_DIRECTORY = "./src/comfyui_daam/js"

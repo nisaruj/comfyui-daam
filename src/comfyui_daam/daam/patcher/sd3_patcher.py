@@ -175,7 +175,9 @@ class JointBlockHooker(ObjectHooker[JointBlock]):
         else:
             return hk_self._block_mixing(self, *args, **kwargs)
 
-    def _block_mixing(hk_self, self, context, x, context_block, x_block, c):
+    def _block_mixing(
+        hk_self, self, context, x, context_block, x_block, c, transformer_options={}
+    ):
         context_qkv, context_intermediates = context_block.pre_attention(context, c)
 
         if x_block.x_block_self_attn:

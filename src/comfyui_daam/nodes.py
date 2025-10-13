@@ -1,8 +1,14 @@
 import comfy.samplers
 import comfy.model_base
+from comfy.cli_args import args
 
 import latent_preview
 import torch
+import json
+import folder_paths
+import os
+import random
+import numpy as np
 
 from .daam import analyzer
 from .daam.heatmap import GlobalHeatMap, HeatMapProcessor
@@ -14,6 +20,7 @@ from .daam.patcher import (
 from .daam.util import is_output_connected
 
 from PIL import Image
+from PIL.PngImagePlugin import PngInfo
 
 
 class CLIPTextEncodeWithTokens:
@@ -43,7 +50,7 @@ class CLIPTextEncodeWithTokens:
     )
     FUNCTION = "encode"
 
-    CATEGORY = "conditioning"
+    CATEGORY = "daam-nodes"
     DESCRIPTION = "Encodes a text prompt using a CLIP model into an embedding that can be used to guide the diffusion model towards generating specific images."
 
     def encode(self, clip, text):
@@ -197,7 +204,7 @@ class KSamplerDAAM:
     OUTPUT_TOOLTIPS = ("The denoised latent.", "The heatmap data.")
     FUNCTION = "sample"
 
-    CATEGORY = "sampling"
+    CATEGORY = "daam-nodes"
     DESCRIPTION = "Uses the provided model, positive and negative conditioning to denoise the latent image."
 
     def sample(
@@ -318,7 +325,7 @@ class DAAMAnalyzer:
     OUTPUT_TOOLTIPS = ("The heatmap image.",)
     FUNCTION = "analyze"
 
-    CATEGORY = "image"
+    CATEGORY = "daam-nodes"
     DESCRIPTION = "Generates a heatmap image from the attention maps and overlays it on the input images."
 
     def analyze(self, clip, tokens, heatmaps, attentions, caption, alpha, images=None):
@@ -362,17 +369,177 @@ class DAAMAnalyzer:
         return (embedded_imgs,)
 
 
+class DAAMPreviewImage:
+    def __init__(self):
+        self.output_dir = folder_paths.get_temp_directory()
+        self.type = "temp"
+        self.prefix_append = "_temp_" + "".join(
+            random.choice("abcdefghijklmnopqrstupvxyz") for x in range(5)
+        )
+        self.compress_level = 1
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "clip": ("CLIP",),
+                "tokens": ("TOKENS",),
+                "heatmaps": ("HEATMAP",),
+                "images": ("IMAGE",),
+                "top_tokens": (
+                    "INT",
+                    {
+                        "default": 5,
+                        "min": 1,
+                        "max": 10,
+                        "tooltip": "The number of top tokens that will be displayed.",
+                    },
+                ),
+            },
+            "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"},
+        }
+
+    RETURN_TYPES = ()
+    FUNCTION = "save_and_display"
+
+    OUTPUT_NODE = True
+
+    CATEGORY = "daam-nodes"
+    DESCRIPTION = "Preview the images along with attention heatmaps."
+
+    def save_and_display(
+        self,
+        clip,
+        tokens,
+        heatmaps,
+        images,
+        top_tokens=5,
+        filename_prefix="DAAMAttn",
+        prompt=None,
+        extra_pnginfo=None,
+    ):
+        self.prompt_analyzer = analyzer.PromptAnalyzer(clip, tokens)
+
+        batch_count, img_height, img_width, _ = images.shape  # (B, H, W, C)
+
+        top_attention_map = []
+        word_len = self.prompt_analyzer.word_count()
+
+        for batch_index in range(batch_count):
+            # image: (H, W, C)
+            # image = images[batch_index]
+
+            global_heat_map = GlobalHeatMap(self.prompt_analyzer, heatmaps, batch_index)
+
+            heat_maps = global_heat_map.heat_maps  # (num_tokens, 64, 64)
+
+            expanded_heat_maps = (
+                HeatMapProcessor.expand_images(
+                    heat_maps, img_height, img_width, max_token_len=word_len
+                )
+                if heat_maps is not None
+                else None
+            )
+
+            t_maps = expanded_heat_maps.detach().cpu()
+            num_tokens = t_maps.shape[0]
+            k = min(top_tokens, num_tokens)
+
+            _, indices = torch.topk(t_maps, k, dim=0, largest=True, sorted=True)
+
+            # Accepts maximum of 256 tokens for performance and storage reasons
+            # Might consider increasing this limit in the future
+            top_k_tokens = (
+                indices.permute(1, 2, 0)
+                .to(dtype=torch.uint8)
+                .cpu()
+                .numpy()
+                .astype(np.uint8)
+            )  # (Height, Width, K)
+
+            filename_prefix += self.prefix_append
+            full_output_folder, filename, counter, subfolder, filename_prefix = (
+                folder_paths.get_save_image_path(
+                    filename_prefix,
+                    self.output_dir,
+                    images[0].shape[1],
+                    images[0].shape[0],
+                )
+            )
+
+            filename_with_batch_num = filename.replace("%batch_num%", str(batch_index))
+            file = f"{filename_with_batch_num}_{counter:05}.npy"
+            np.save(os.path.join(full_output_folder, file), top_k_tokens)
+
+            top_attention_map.append(
+                {
+                    "filename": file,
+                    "subfolder": subfolder,
+                    "type": "temp",
+                }
+            )
+
+        results = self.save_images(images, filename_prefix, prompt, extra_pnginfo)
+        decoded_texts = self.prompt_analyzer.get_decoded_texts()
+
+        return {
+            "ui": {
+                "images": results,
+                "heatmap": top_attention_map,
+                "attention_words": decoded_texts,
+            }
+        }
+
+    def save_images(
+        self, images, filename_prefix="ComfyUI", prompt=None, extra_pnginfo=None
+    ):
+        filename_prefix += self.prefix_append
+        full_output_folder, filename, counter, subfolder, filename_prefix = (
+            folder_paths.get_save_image_path(
+                filename_prefix, self.output_dir, images[0].shape[1], images[0].shape[0]
+            )
+        )
+        results = list()
+        for batch_number, image in enumerate(images):
+            i = 255.0 * image.cpu().numpy()
+            img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
+            metadata = None
+            if not args.disable_metadata:
+                metadata = PngInfo()
+                if prompt is not None:
+                    metadata.add_text("prompt", json.dumps(prompt))
+                if extra_pnginfo is not None:
+                    for x in extra_pnginfo:
+                        metadata.add_text(x, json.dumps(extra_pnginfo[x]))
+
+            filename_with_batch_num = filename.replace("%batch_num%", str(batch_number))
+            file = f"{filename_with_batch_num}_{counter:05}_.png"
+            img.save(
+                os.path.join(full_output_folder, file),
+                pnginfo=metadata,
+                compress_level=self.compress_level,
+            )
+            results.append(
+                {"filename": file, "subfolder": subfolder, "type": self.type}
+            )
+            counter += 1
+
+        return results
+
+
 # A dictionary that contains all nodes you want to export with their names
 # NOTE: names should be globally unique
 NODE_CLASS_MAPPINGS = {
     "KSamplerDAAM": KSamplerDAAM,
     "DAAMAnalyzer": DAAMAnalyzer,
     "CLIPTextEncodeWithTokens": CLIPTextEncodeWithTokens,
+    "DAAMPreviewImage": DAAMPreviewImage,
 }
 
 # A dictionary that contains the friendly/humanly readable titles for the nodes
 NODE_DISPLAY_NAME_MAPPINGS = {
     "KSamplerDAAM": "KSampler for DAAM",
-    "DAAMAnalyzer": "DAAMAnalyzer",
+    "DAAMAnalyzer": "DAAM Analyzer",
     "CLIPTextEncodeWithTokens": "CLIP Text Encode (With Tokens)",
+    "DAAMPreviewImage": "DAAM Preview Image (Beta)",
 }

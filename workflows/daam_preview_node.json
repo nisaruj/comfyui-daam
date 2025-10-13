@@ -1,0 +1,144 @@
+{
+  "1": {
+    "inputs": {
+      "ckpt_name": "waiNSFWIllustrious_v150.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "Load Checkpoint"
+    }
+  },
+  "2": {
+    "inputs": {
+      "seed": 625967958181974,
+      "steps": 25,
+      "cfg": 6,
+      "sampler_name": "euler_ancestral",
+      "scheduler": "normal",
+      "denoise": 1,
+      "model": [
+        "1",
+        0
+      ],
+      "positive": [
+        "4",
+        0
+      ],
+      "negative": [
+        "5",
+        0
+      ],
+      "latent_image": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "KSamplerDAAM",
+    "_meta": {
+      "title": "KSampler for DAAM"
+    }
+  },
+  "4": {
+    "inputs": {
+      "text": "1girl,big fox ears,school uniform,blue eyes,bag,outdoor,fluffy tail,wavy bronde hair,black skirt,white shirt,black belt",
+      "clip": [
+        "1",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncodeWithTokens",
+    "_meta": {
+      "title": "CLIP Text Encode (With Tokens)"
+    }
+  },
+  "5": {
+    "inputs": {
+      "text": "bad quality,worst quality,old,bowtie,necktie,bow",
+      "clip": [
+        "1",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncodeWithTokens",
+    "_meta": {
+      "title": "CLIP Text Encode (With Tokens)"
+    }
+  },
+  "6": {
+    "inputs": {
+      "width": 832,
+      "height": 1216,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage",
+    "_meta": {
+      "title": "Empty Latent Image"
+    }
+  },
+  "7": {
+    "inputs": {
+      "top_tokens": 5,
+      "clip": [
+        "1",
+        1
+      ],
+      "tokens": [
+        "4",
+        1
+      ],
+      "heatmaps": [
+        "2",
+        1
+      ],
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "DAAMPreviewImage",
+    "_meta": {
+      "title": "DAAM Preview Image (Beta)"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "2",
+        0
+      ],
+      "vae": [
+        "1",
+        2
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "15": {
+    "inputs": {
+      "top_tokens": 5,
+      "clip": [
+        "1",
+        1
+      ],
+      "tokens": [
+        "5",
+        1
+      ],
+      "heatmaps": [
+        "2",
+        2
+      ],
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "DAAMPreviewImage",
+    "_meta": {
+      "title": "DAAM Preview Image (Beta)"
+    }
+  }
+}
