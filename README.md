@@ -12,9 +12,9 @@ This extension enables visualization of cross-attention heatmaps within Stable D
 
 ✨ Featuring an Interactive Preview Node — discover the top attention words by simply hovering over the image.
 
-
-
-
+<p align="center">
+<img src="https://i.ibb.co/fVWTs404/Recording-2025-10-13-191703.gif" width="300" />
+</p>
 
 ## ✨ Features
 - ✅ Positive / Negative prompt heatmap visualization
@@ -78,6 +78,14 @@ This node generates overlay heatmaps that show which parts of the image correspo
 
 ![Node: DAAMAnalyzer](https://github.com/nisaruj/comfyui-daam/blob/main/img/node_analyzer.png)
 
+### `DAAM Preview (Beta)`
+
+![Node: DAAM Preview (Beta)](https://github.com/nisaruj/comfyui-daam/blob/main/img/node_daam_preview.png)
+
+**The DAAM Preview node provides an interactive visualization of attention maps.**
+
+When the cursor hovers over an image region, the node displays the top attention words associated with that area, ranked by their attention scores. This feature enables clearer interpretation of how specific prompt tokens influence different parts of the generated image.
+
 
 ## 📷 Example Output
 
@@ -88,6 +96,10 @@ This node generates overlay heatmaps that show which parts of the image correspo
 ![DAAM Result](https://github.com/nisaruj/comfyui-daam/blob/main/img/preview.png)
 
 ## 📦 Changelog
+
+- **0.5.0**
+    - Added Interactive Preview Node
+    - Moved all nodes to `daam-nodes` category
 
 - **0.4.0**
     - Flux and SD3 initial support
