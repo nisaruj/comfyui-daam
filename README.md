@@ -10,10 +10,15 @@ This extension enables visualization of cross-attention heatmaps within Stable D
 
 ![Sample Workflow](https://github.com/nisaruj/comfyui-daam/blob/main/img/workflow.png)
 
-This project was adapted from the [SD Web UI implementation](https://github.com/kousw/stable-diffusion-webui-daam).  Special thanks to [@kousw](https://github.com/kousw) for the original work!
+✨ Featuring an Interactive Preview Node — discover the top attention words by simply hovering over the image.
+
+
+
+
 
 ## ✨ Features
 - ✅ Positive / Negative prompt heatmap visualization
+- ✅ Interactive Image Preview with corresponding attention words
 - ✅ SDXL, SD1.5, SD3 support
 - ✅ Flux Dev support (Beta)
 
@@ -98,3 +103,6 @@ This node generates overlay heatmaps that show which parts of the image correspo
     - Bug fixes and stability improvements
 - **0.1.1**
     - Initial Version with SDXL support
+
+
+This project was adapted from the [SD Web UI implementation](https://github.com/kousw/stable-diffusion-webui-daam).  Special thanks to [@kousw](https://github.com/kousw) for the original work!
