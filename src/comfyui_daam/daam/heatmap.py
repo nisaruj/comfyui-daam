@@ -108,12 +108,6 @@ class HeatMapProcessor:
         if im is None:
             return im
 
-        # If a single image is provided, delegate to the existing single-image method
-        if im.dim() == 2:
-            return HeatMapProcessor.expand_image(
-                im, h=h, w=w, absolute=absolute, threshold=threshold
-            )
-
         if im.dim() != 3:
             raise ValueError(
                 f"Expected im of shape (tokens, H, W) or (H, W), got {tuple(im.shape)}"

@@ -421,7 +421,7 @@ class DAAMPreviewImage:
         self.prompt_analyzer = analyzer.PromptAnalyzer(clip, tokens)
 
         batch_count, img_height, img_width, _ = images.shape  # (B, H, W, C)
-        
+
         top_attention_map = []
         word_len = self.prompt_analyzer.word_count()
 
